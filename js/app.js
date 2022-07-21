@@ -185,7 +185,12 @@ function actualizarResumen() {
 
     // Scripting de los elementos HTML
     const resumen = document.createElement('DIV');
-    resumen.classList.add('col-md-6', 'card', 'py-5', 'px-3', 'shadow');
+    resumen.classList.add('col-md-6', 'card', 'py-2', 'px-3', 'shadow');
+
+    const heading = document.createElement('H3');
+    heading.classList.add('my-4', 'text-center');
+    heading.textContent = 'Platillos consumidos';
+    resumen.appendChild(heading);
 
     const mesa = document.createElement('P');
     mesa.classList.add('fw-bold');
@@ -204,11 +209,6 @@ function actualizarResumen() {
     horaSpan.textContent = cliente.hora;
     hora.appendChild(horaSpan);
     resumen.appendChild(hora);
-
-    const heading = document.createElement('H3');
-    heading.classList.add('my-4', 'text-center');
-    heading.textContent = 'Platillos consumidos';
-    resumen.appendChild(heading);
 
     // Iterar sobre el pedido y mostrar los platillos
     const grupo = document.createElement('UL');
@@ -272,6 +272,9 @@ function actualizarResumen() {
     resumen.appendChild(grupo);
 
     contenido.appendChild(resumen);
+
+    // Mostrar formulario de propinas
+    formularioPropinas();
 }
 
 function limpiarHTML(contenedor) {
@@ -300,4 +303,113 @@ function mensajePedidoVacio(contenedor) {
     texto.textContent = 'Añade los elementos del pedido';
 
     contenedor.appendChild(texto);
+}
+
+function formularioPropinas() {
+    const contenido = document.querySelector('#resumen .contenido');
+
+    const formulario = document.createElement('DIV');
+    formulario.classList.add('col-md-6', 'formulario');
+
+    const formularioDiv = document.createElement('DIV');
+    formularioDiv.classList.add('card', 'py-2', 'px-3', 'shadow');
+
+    const heading = document.createElement('H3');
+    heading.classList.add('my-4', 'text-align-center');
+    heading.textContent = 'Propina';
+    formularioDiv.appendChild(heading);
+
+    // Radio buttons
+    for (valor of ['0', '10', '25', '50']) {
+        const radioDiv = document.createElement('DIV');
+        radioDiv.classList.add('form-check');
+
+        const radioInput = document.createElement('INPUT');
+        radioInput.classList.add('form-check-input');
+        radioInput.type = 'radio';
+        radioInput.name = 'propina';
+        radioInput.value = valor;
+
+        // Funcionalidad de calcular propina
+        radioInput.onclick = calcularPropina;
+
+        const radioLabel = document.createElement('LABEL');
+        radioLabel.classList.add('form-check-label');
+        radioLabel.textContent = `${valor}%`;
+
+        radioDiv.appendChild(radioInput);
+        radioDiv.appendChild(radioLabel);
+
+        formularioDiv.appendChild(radioDiv);
+    }
+
+    formulario.appendChild(formularioDiv)
+    contenido.appendChild(formulario);
+}
+
+function calcularPropina() {
+    const { pedido } = cliente
+
+    // Sumar todos los subtotales
+    let subtotal = 0;
+    pedido.forEach(articulo => subtotal += articulo.precio * articulo.cantidad);
+
+    // Calcular rl valor de la propina
+    const propinaSeleccionada = document.querySelector('[name="propina"]:checked').value;
+    const propina = ((subtotal * parseInt(propinaSeleccionada)) / 100);
+
+    // Calcular el valor total a pagar
+    const total = subtotal + propina;
+
+    // Mostrar subtotal, propina y total a pagar en el DOM
+    mostrarPagos(subtotal, propina, total);
+}
+
+function mostrarPagos(subtotal, propina, total) {
+    // Contenedor padre en el que se insertarán los pagos
+    const formulario = document.querySelector('.formulario > div');
+
+    // Eliminar resultados previos si ya los había
+    const resultadoPrevio = document.querySelector('.total-pagar');
+    if (resultadoPrevio) {
+        resultadoPrevio.remove();
+        return mostrarPagos(subtotal, propina, total);
+    }
+
+    // Contendedor de los pagos
+    const divPagos = document.createElement('DIV');
+    divPagos.classList.add('total-pagar');
+
+    // Subtotal
+    const subtotalP = document.createElement('P');
+    subtotalP.classList.add('fs-5', 'fw-bold', 'mt-3');
+    subtotalP.textContent = 'Subtotal Consumo: ';
+    const subtotalSpan = document.createElement('SPAN');
+    subtotalSpan.classList.add('fw-normal');
+    subtotalSpan.textContent = `$${subtotal}`;
+    subtotalP.appendChild(subtotalSpan);
+    divPagos.appendChild(subtotalP);
+
+    // Propina
+    const propinaP = document.createElement('P');
+    propinaP.classList.add('fs-5', 'fw-bold', 'mt-2');
+    propinaP.textContent = 'Propina: ';
+    const propinaSpan = document.createElement('SPAN');
+    propinaSpan.classList.add('fw-normal');
+    propinaSpan.textContent = `$${propina}`;
+    propinaP.appendChild(propinaSpan);
+    divPagos.appendChild(propinaP);
+
+    // Total
+    const totalP = document.createElement('P');
+    totalP.classList.add('fs-3', 'fw-bold', 'mt-2');
+    totalP.textContent = 'Total a Pagar: ';
+    const totalSpan = document.createElement('SPAN');
+    totalSpan.classList.add('fw-normal');
+    totalSpan.textContent = `$${total}`;
+    totalP.appendChild(totalSpan);
+    divPagos.appendChild(totalP);
+
+    // Insertar en el DOM
+    formulario.appendChild(divPagos);
 }
